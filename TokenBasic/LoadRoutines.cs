@@ -1,5 +1,6 @@
 ﻿// LoadRoutines.cs - 03/30/2018
 
+using Common.JSON;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,7 +13,7 @@ namespace TokenBasic
     {
         internal static string[] programLines;
         internal static Dictionary<int, int> lineNumberIndex;
-        internal static string[,] tokens;
+        internal static JArray tokens;
 
         internal static void LoadProgram(string filename)
         {
@@ -48,6 +49,7 @@ namespace TokenBasic
         {
             StringBuilder sb = new StringBuilder();
             StringBuilder token = new StringBuilder();
+            tokens = new JArray();
             for (int lineIndex = 0; lineIndex < programLines.Count(); lineIndex++)
             {
                 sb.Clear();
@@ -55,9 +57,15 @@ namespace TokenBasic
                 bool inToken = false;
                 bool inQuote = false;
                 bool inWord = false;
+                bool inRem = false;
                 bool inData = false;
                 foreach (char c in programLines[lineIndex])
                 {
+                    if (inRem)
+                    {
+                        sb.Append(c);
+                        continue;
+                    }
                     if (c == '"')
                     {
                         if (!inQuote)
@@ -169,7 +177,11 @@ namespace TokenBasic
                         sb.Append(c);
                         sb.Append("\t");
                         token.Append(c);
-                        if (token.ToString().Equals("{DATA}"))
+                        if (token.ToString().Equals("{REM}"))
+                        {
+                            inRem = true;
+                        }
+                        else if (token.ToString().Equals("{DATA}"))
                         {
                             inData = true;
                         }
@@ -189,7 +201,13 @@ namespace TokenBasic
                     sb.Append(c);
                     sb.Append("\t");
                 }
-                Console.WriteLine(sb.ToString()); // todo
+                //Console.WriteLine(sb.ToString()); // todo
+                string[] tokenList = sb.ToString().Split('\t');
+                tokens.Add("{LINE}");
+                foreach (string s in tokenList)
+                {
+                    tokens.Add(s);
+                }
             }
         }
     }
